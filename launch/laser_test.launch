@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<launch>
+	
+	<!-- Start the laser test node -->
+
+	<node name="laser_test" pkg="laser_test" type="laser_test_node.py" output="screen" >
+		<!--param name="rate" value="15"/-->
+	</node>
+
+</launch>
+
