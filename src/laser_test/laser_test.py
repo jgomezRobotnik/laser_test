@@ -26,11 +26,9 @@ class LaserTest():
 
         self.servo2_pub = rospy.Publisher(
             '/joint_2/command', Float64, queue_size=10)
-        self.servo2_pub.publish(Float64(0.0))
 
         self.servo1_pub = rospy.Publisher(
             '/joint_1/command', Float64, queue_size=10)
-        self.servo1_pub.publish(Float64(0.0))
 
         self.listener = tf.TransformListener()
 
@@ -39,24 +37,44 @@ class LaserTest():
 
     def start(self):
 
-        rospy.sleep(rospy.Duration(10, 0))
+        for _ in range(12):
 
-        # Print initial position
-        rospy.logwarn("Servo and laser initial pose: %f %f" % (0.0, 0.0))
-        # Calculate actual position:
-        prev_servo_pos, prev_laser_pos = self.calculateActualPos()
+            average_error = []
 
-        for pos in self.executions:
-            # Move servo to the new position:
-            self.servo1_pub.publish(Float64(pos))
-            rospy.sleep(rospy.Duration(5, 0))
-            # Calculate new position:
-            new_servo_pos, new_laser_pos = self.calculateActualPos()
-            # Print increment of positions:
-            rospy.logwarn("Servo and laser increment: %f %f" % (
-                abs(new_servo_pos - prev_servo_pos), abs(new_laser_pos - prev_laser_pos)))
+            rospy.sleep(rospy.Duration(1, 0))
 
-        pass
+            self.servo2_pub.publish(Float64(0.0))
+
+            rospy.sleep(rospy.Duration(1, 0))
+
+            self.servo1_pub.publish(Float64(0.0))
+
+            rospy.sleep(rospy.Duration(10, 0))
+
+            # Save initial position
+            with open('results.txt', 'a+') as file:
+                file.write("Servo and laser initial pose: %f %f\n" %
+                           (0.0, 0.0))
+            # Calculate actual position:
+            prev_servo_pos, prev_laser_pos = self.calculateActualPos()
+
+            for pos in self.executions:
+                # Move servo to the new position:
+                self.servo1_pub.publish(Float64(pos))
+                rospy.sleep(rospy.Duration(4, 0))
+                # Calculate new position:
+                new_servo_pos, new_laser_pos = self.calculateActualPos()
+                # Save increment of positions:
+                with open('results.txt', 'a+') as file:
+                    file.write("Servo and laser increment: %f %f\n" % (
+                        abs(new_servo_pos - prev_servo_pos), abs(new_laser_pos - prev_laser_pos)))
+                # Add error to average error
+                average_error.append(
+                    abs(abs(new_servo_pos - prev_servo_pos) - abs(new_laser_pos - prev_laser_pos)))
+            # Save average error on file
+            with open('results.txt', 'a+') as file:
+                file.write("Laser average error: %f\n\n" % (
+                    sum(average_error) / len(average_error)))
 
     def calculateActualPos(self):
 
